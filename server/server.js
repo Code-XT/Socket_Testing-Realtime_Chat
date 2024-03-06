@@ -42,8 +42,10 @@ io.on("connection", (socket) => {
       : socket.broadcast.emit("response", { message, username });
   });
 
-  socket.on("typing", (isTyping) => {
-    socket.broadcast.emit("typing_status", isTyping);
+  socket.on("typing", ({ isTyping, memberId }) => {
+    console.log(`typing: ${isTyping}`);
+    console.log(`receiver: ${memberId}`);
+    socket.broadcast.emit("typing_status", isTyping, memberId);
   });
 
   socket.on("join-room", (room) => {
