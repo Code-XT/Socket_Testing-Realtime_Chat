@@ -1,11 +1,13 @@
 import React, { useState } from "react";
 import { io } from "socket.io-client";
-import { Link } from "react-router-dom";
+import { Route, Routes, useNavigate, Navigate, Link } from "react-router-dom";
+import App from "../App";
 
 const LoginSignupPage = () => {
-  // Receive setSocket function as props
   const [username, setUsername] = useState("");
-  const [socket, setSocket] = useState(null);
+  const [loggedIn, setLoggedIn] = useState(false);
+
+  const navigate = useNavigate();
 
   const handleInputChange = (e) => {
     setUsername(e.target.value);
@@ -13,45 +15,48 @@ const LoginSignupPage = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const socket = io("http://localhost:3000"); // Create socket instance
-    console.log("Socket instance created:", socket);
-    socket ? setSocket(socket) : null; // Set the socket instance using setSocket function
-    console.log("Logging in with username:", username);
+
+    setLoggedIn(true); // Update state to indicate user is logged in
+
+    navigate(`/dashboard/${username}`);
   };
 
   return (
-    <div className="min-h-screen flex justify-center items-center bg-gradient-to-r from-blue-500 to-green-400">
-      <div className="bg-white bg-opacity-25 p-8 rounded-lg shadow-lg">
-        <h2 className="text-3xl font-semibold text-center mb-4 text-white">
-          Login
-        </h2>
-        <Link to={`/dashboard/${username}`}>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label htmlFor="username" className="text-white">
-                Username
-              </label>
-              <input
-                type="text"
-                id="username"
-                value={username}
-                onChange={handleInputChange}
-                className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500"
-                placeholder="Enter your username"
-                required
-              />
-            </div>
-
-            <button
-              type="submit"
-              className="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition duration-300"
-            >
+    <>
+      {loggedIn ? ( // Render App component if user is logged in
+        <Link to={`/dashboard/${username}`} replace reloadDocument />
+      ) : (
+        <div className="min-h-screen flex justify-center items-center bg-gradient-to-r from-blue-500 to-green-400">
+          <div className="bg-white bg-opacity-25 p-8 rounded-lg shadow-lg">
+            <h2 className="text-3xl font-semibold text-center mb-4 text-white">
               Login
-            </button>
-          </form>
-        </Link>
-      </div>
-    </div>
+            </h2>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label htmlFor="username" className="text-white">
+                  Username
+                </label>
+                <input
+                  type="text"
+                  id="username"
+                  value={username}
+                  onChange={handleInputChange}
+                  className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500"
+                  placeholder="Enter your username"
+                  required
+                />
+              </div>
+              <button
+                type="submit"
+                className="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition duration-300"
+              >
+                Login
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 

@@ -2,14 +2,14 @@ import { useEffect, useState, useMemo } from "react";
 import { useParams } from "react-router-dom";
 import io from "socket.io-client";
 
-function App() {
-  const socket = useMemo(() => io("http://localhost:3000"), []);
+function App({ socket }) {
   const [message, setMessage] = useState("");
   let [messages, setMessages] = useState([]);
   const [status, setStatus] = useState("");
   let [members, setMembers] = useState([]);
   let typingTimeout;
   const { username } = useParams();
+  console.log(socket.id);
 
   useEffect(() => {
     socket.on("connect", () => {
@@ -34,7 +34,7 @@ function App() {
     e.target[0].value
       ? (document.getElementById(
           "messages"
-        ).innerHTML += `<p>Me (${e.target[1].value}): ${message}</p>`)
+        ).innerHTML += `<p>Me (${e.target[0].value}): ${message}</p>`)
       : (document.getElementById(
           "messages"
         ).innerHTML += `<p>Me: ${message}</p>`);
@@ -66,10 +66,9 @@ function App() {
           <h3 className="text-lg text-center text-gray-600 mb-4">
             Welcome {username}
           </h3>
-          <h5
-            id="socket-id"
-            className="text-sm text-center text-gray-400 mb-6"
-          ></h5>
+          <h5 id="socket-id" className="text-sm text-center text-gray-400 mb-6">
+            {socket.id}
+          </h5>
           <form
             onSubmit={(e) => sendMessage(e)}
             className="flex items-center mb-4"
@@ -118,7 +117,7 @@ function App() {
           <div>
             <h4 className="text-lg font-bold mb-2 text-white">Members</h4>
             {members.map((mb, index) => (
-              <p key={index} className="text-gray-600 mb-2 text-white">
+              <p key={index} className=" mb-2 text-white">
                 {status === "online" ? "Online" : "Offline"}: {mb}
                 <span id={`typing_${mb}`} className="ml-2"></span>
               </p>
@@ -127,7 +126,7 @@ function App() {
           <h2 className="text-xl font-bold mt-6 mb-4 text-white">Messages</h2>
           <div id="messages">
             {messages.map((m, index) => (
-              <p key={index} className="text-gray-800 mb-2 text-white">
+              <p key={index} className=" mb-2 text-white">
                 {m.receiver
                   ? `${m.username} (Private): ${m.message}`
                   : `${m.username}: ${m.message}`}
