@@ -1,6 +1,5 @@
-import { useEffect, useState, useMemo } from "react";
-import { useParams } from "react-router-dom";
-import io from "socket.io-client";
+import { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 
 function App({ socket }) {
   const [message, setMessage] = useState("");
@@ -9,16 +8,15 @@ function App({ socket }) {
   let [members, setMembers] = useState([]);
   let typingTimeout;
   const { username } = useParams();
-  console.log(socket.id);
+  const navigate = useNavigate();
 
   useEffect(() => {
     socket.on("connect", () => {
-      document.getElementById("socket-id").innerHTML = "ID: " + socket.id;
       setStatus("online");
-      socket.emit("join", socket.id);
+
+      socket.emit("join", socket.id, username);
     });
     socket.on("disconnect", () => {
-      console.log(`a user disconnected`);
       setStatus("offline");
     });
     return () => {
@@ -43,6 +41,7 @@ function App({ socket }) {
 
   socket.on("response", (message) => {
     setMessages((messages = [...messages, message]));
+    console.log(message);
   });
 
   socket.on("joined", (member) => {
@@ -56,6 +55,13 @@ function App({ socket }) {
     }
   });
 
+  const handleLogout = () => {
+    socket.close();
+    navigate("/");
+    const newUsers = members.filter((user) => user.receiver !== username);
+    setMembers(newUsers);
+  };
+
   return (
     <>
       <div className="min-h-screen flex justify-center items-center bg-gradient-to-r from-blue-500 to-green-400">
@@ -66,9 +72,16 @@ function App({ socket }) {
           <h3 className="text-lg text-center text-gray-600 mb-4">
             Welcome {username}
           </h3>
-          <h5 id="socket-id" className="text-sm text-center text-gray-400 mb-6">
-            {socket.id}
-          </h5>
+
+          <div className="flex justify-center">
+            <button
+              onClick={handleLogout}
+              className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition duration-300 mb-4"
+            >
+              Logout
+            </button>
+          </div>
+
           <form
             onSubmit={(e) => sendMessage(e)}
             className="flex items-center mb-4"
@@ -102,31 +115,35 @@ function App({ socket }) {
                       isTyping: false,
                       memberId: socket.id,
                     });
-                  }, 2000);
+                  }, 1000);
                 }
               }}
               className="flex-grow p-2 border rounded-lg focus:outline-none bg-opacity-50"
             />
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition duration-300"
+              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition duration-300 ml-2"
             >
               Send
             </button>
           </form>
           <div>
             <h4 className="text-lg font-bold mb-2 text-white">Members</h4>
-            {members.map((mb, index) => (
-              <p key={index} className=" mb-2 text-white">
-                {status === "online" ? "Online" : "Offline"}: {mb}
-                <span id={`typing_${mb}`} className="ml-2"></span>
+            {members.map((mb) => (
+              <p key={mb.id} className=" mb-2 text-white">
+                {status === "online" ? "Online" : "Offline"}: {mb.receiver}
+                <span id={`typing_${mb.id}`} className="ml-2"></span>
               </p>
             ))}
           </div>
           <h2 className="text-xl font-bold mt-6 mb-4 text-white">Messages</h2>
-          <div id="messages">
+          <div
+            id="messages"
+            className="max-h-80 overflow-y-auto"
+            style={{ maxHeight: "400px" }}
+          >
             {messages.map((m, index) => (
-              <p key={index} className=" mb-2 text-white">
+              <p key={index} className="my-2 text-white">
                 {m.receiver
                   ? `${m.username} (Private): ${m.message}`
                   : `${m.username}: ${m.message}`}

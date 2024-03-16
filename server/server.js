@@ -2,6 +2,7 @@ import express from "express";
 import { createServer } from "http";
 import { Server } from "socket.io";
 import cors from "cors";
+import { error } from "console";
 
 const app = express();
 const httpServer = createServer(app);
@@ -26,20 +27,35 @@ app.get("/", (req, res) => {
 });
 
 let users = [];
+console.log(users);
 
 io.on("connection", (socket) => {
   console.log(`a user connected: ${socket.id}`);
 
-  socket.on("join", (member) => {
-    users.push(member);
+  socket.on("join", (member, receiver) => {
+    if (users.some((user) => user.receiver === receiver)) {
+      users = users.filter((user) => user.receiver !== receiver);
+    }
+    users.push({ id: member, receiver });
+    console.log(users);
     io.emit("joined", users);
   });
 
   socket.on("message", (username, receiver, message) => {
     console.log(`message: ${message}`);
-    receiver
-      ? socket.to(receiver).emit("response", { message, username, receiver })
-      : socket.broadcast.emit("response", { message, username });
+
+    if (receiver) {
+      users.forEach((user) => {
+        if (user.receiver === receiver) {
+          io.to(user.id).emit("response", { message, username, receiver });
+        } else {
+          //error
+          socket.emit("response", "Invalid user");
+        }
+      });
+    } else {
+      socket.broadcast.emit("response", { message, username });
+    }
   });
 
   socket.on("typing", ({ isTyping, memberId }) => {
@@ -51,9 +67,16 @@ io.on("connection", (socket) => {
   socket.on("join-room", (room) => {
     socket.join(room);
   });
+  socket.on("logout", () => {
+    console.log(`a user logged out: ${socket.id}`);
+    users = users.filter((user) => user.id !== socket.id);
+    io.emit("joined", users); // Update clients with the new users list
+  });
+
   socket.on("disconnect", () => {
     console.log(`a user disconnected: ${socket.id}`);
-    users = users.filter((user) => user !== socket.id);
+    users = users.filter((user) => user.id !== socket.id);
+    io.emit("joined", users); // Update clients with the new users list
   });
 });
 
