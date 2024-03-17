@@ -27,7 +27,6 @@ app.get("/", (req, res) => {
 });
 
 let users = [];
-console.log(users);
 
 io.on("connection", (socket) => {
   console.log(`a user connected: ${socket.id}`);
@@ -48,13 +47,11 @@ io.on("connection", (socket) => {
       users.forEach((user) => {
         if (user.receiver === receiver) {
           io.to(user.id).emit("response", { message, username, receiver });
-        } else {
-          //error
-          socket.emit("response", "Invalid user");
+          socket.emit("response", { message, username, receiver });
         }
       });
     } else {
-      socket.broadcast.emit("response", { message, username });
+      io.emit("response", { message, username });
     }
   });
 

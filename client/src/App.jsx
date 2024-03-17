@@ -29,19 +29,18 @@ function App({ socket }) {
   const sendMessage = (e) => {
     e.preventDefault();
     socket.emit("message", username, e.target[0].value, message);
-    e.target[0].value
-      ? (document.getElementById(
-          "messages"
-        ).innerHTML += `<p>Me (${e.target[0].value}): ${message}</p>`)
-      : (document.getElementById(
-          "messages"
-        ).innerHTML += `<p>Me: ${message}</p>`);
+    // e.target[0].value
+    //   ? (document.getElementById(
+    //       "messages"
+    //     ).innerHTML += `<p>Me (${e.target[0].value}): ${message}</p>`)
+    //   : (document.getElementById(
+    //       "messages"
+    //     ).innerHTML += `<p>Me: ${message}</p>`);
     setMessage("");
   };
 
   socket.on("response", (message) => {
     setMessages((messages = [...messages, message]));
-    console.log(message);
   });
 
   socket.on("joined", (member) => {
@@ -61,6 +60,7 @@ function App({ socket }) {
     const newUsers = members.filter((user) => user.receiver !== username);
     setMembers(newUsers);
   };
+  console.log(messages);
 
   return (
     <>
@@ -145,8 +145,12 @@ function App({ socket }) {
             {messages.map((m, index) => (
               <p key={index} className="my-2 text-white">
                 {m.receiver
-                  ? `${m.username} (Private): ${m.message}`
-                  : `${m.username}: ${m.message}`}
+                  ? (m.username === username ? m.receiver : m.username) +
+                    " (Private): " +
+                    m.message
+                  : (m.username === username ? "Me" : m.username) +
+                    ": " +
+                    m.message}
               </p>
             ))}
           </div>
