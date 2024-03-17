@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import EmojiPicker from "emoji-picker-react";
 
 function App({ socket }) {
   const [message, setMessage] = useState("");
@@ -9,6 +10,7 @@ function App({ socket }) {
   let typingTimeout;
   const { username } = useParams();
   const navigate = useNavigate();
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
   useEffect(() => {
     socket.on("connect", () => {
@@ -60,14 +62,19 @@ function App({ socket }) {
     const newUsers = members.filter((user) => user.receiver !== username);
     setMembers(newUsers);
   };
-  console.log(messages);
+
+  const handleEmojiClick = (chosenEmoji) => {
+    console.log(chosenEmoji);
+    setMessage(message + chosenEmoji.emoji);
+    setShowEmojiPicker(false); // Hide emoji picker after selection
+  };
 
   return (
     <>
       <div className="min-h-screen flex justify-center items-center bg-gradient-to-r from-blue-500 to-green-400">
         <div className="bg-white bg-opacity-25 p-8 rounded-lg shadow-lg">
           <h3 className="text-2xl text-center font-bold mb-4 text-white">
-            Socket.IO Chat
+            TeXChat
           </h3>
           <h3 className="text-lg text-center text-gray-600 mb-4">
             Welcome {username}
@@ -120,6 +127,7 @@ function App({ socket }) {
               }}
               className="flex-grow p-2 border rounded-lg focus:outline-none bg-opacity-50"
             />
+
             <button
               type="submit"
               className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition duration-300 ml-2"
@@ -127,6 +135,28 @@ function App({ socket }) {
               Send
             </button>
           </form>
+          <button
+            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+            className="ml-2"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
+              className="w-6 h-6"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M15.182 15.182a4.5 4.5 0 01-6.364 0M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+          </button>
+          {showEmojiPicker && (
+            <EmojiPicker onEmojiClick={handleEmojiClick} theme="auto" />
+          )}
           <div>
             <h4 className="text-lg font-bold mb-2 text-white">Members</h4>
             {members.map((mb) => (
